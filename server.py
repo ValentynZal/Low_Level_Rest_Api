@@ -1,16 +1,20 @@
 import socket
+import requests
+from views import user_list, user_create, user_detail
 
 
 URLS = {
-    '/users': 'user list',
-    '/users/create' : 'create user',
-    '/users/user/id': 'user detail',
+    '/users': user_list,
+    '/users/create' : user_create,
+    '/users/user/id': user_detail,
 }
+
 
 def parse_request(request):
     ''' returns method and url '''
     parsed = request.split(' ')
     return (parsed[0], parsed[1])
+
 
 def gen_headers(method, url):
     ''' returns headers and code'''
@@ -21,6 +25,7 @@ def gen_headers(method, url):
         return('HTTP/1.1 404 Method not found\n\n', 404)
 
     return ('HTTP/1.1 200 OK\n\n', 200)
+     
 
 def gen_content(code, url):
     if code == 404:
@@ -29,7 +34,7 @@ def gen_content(code, url):
     if code == 405:
         return '<h1>405</h1><p>Method not allowed</p>'
 
-    return f'<h1>{URLS[url]}</h1>'
+    return URLS[url]()
 
 
 def gen_response(request):
@@ -41,6 +46,7 @@ def gen_response(request):
     # print(f'body: {body}')
     return (headers + body).encode()
 
+
 def run():
     ''' create and setup both server and client sockets, handle requests '''
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -50,11 +56,16 @@ def run():
 
     while True:
         client_socket, addr = server_socket.accept()
+        # print('Connection from', addr)
+
+
         request = client_socket.recv(1024)
-        print(request.decode('utf-8').split(' '))
-        # print(request.decode('utf-8'), '\n')
+        # print(request.decode('utf-8').split('r\n\r\n'))
+        # print()
+        print(request.decode('utf-8'))
+        # print()
         # print(request)
-        print()
+        
         # print(addr)
 
         response = gen_response(request.decode('utf-8'))
