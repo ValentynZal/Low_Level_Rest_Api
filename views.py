@@ -1,27 +1,24 @@
-import os
-from jinja2 import Template
+import json
+from init_db import users
 
 
 def user_list(): 
-    pass
+    # TODO:  
+    # pull users from db
+    # return users as json
+    return json.dumps({'users': 'users'})
 
 
-def user_create():    
-    pass
+def user_create(req_body):   
+    # TODO: 
+    # accept json 
+    # push user into db
+    return json.dumps({'message': 'new user is created'})
+    
 
 
-def user_detail():
-    cwd = os.getcwd()
-    path = os.path.join(cwd, 'templates/user_detail.html')   
-    html = open(path).read()
-    template = Template(html)
-    context = {
-        'name': 'Valera', 
-        'surname': 'Nagan', 
-        'birth_date': '1672-02-11', 
-        'gender': 'men', 
-        'profession': 'knight', 
-        'autobiography': 'fights fights fights'
-    }
-
-    return template.render(context)
+def user_detail(id, method, req_body):
+    # TODO: 
+    # pull user with corresponding id from db
+    # return json
+    return json.dumps({'user_id': id})
