@@ -58,7 +58,7 @@ def gen_headers(method, url):
         return ('HTTP/1.1 200 OK\n\n', 200)
      
 
-def gen_content(code, url, method, req_body={}):
+def gen_content(code, url, method, req_body=None):
     if code == 404:
         return '<h1>404</h1><p>Not found</p>'
 
@@ -81,7 +81,7 @@ def gen_response(request):
     # print(f'method: {method} url: {url}')
     headers, code = gen_headers(method, url)
     # print(f'headers: {headers} code: {code}')
-    if method == 'POST':
+    if method == 'POST' or method == 'PUT':
         req_body = parse_request_body(request)
         res_body = gen_content(code, url, method, req_body)
     else:
