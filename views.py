@@ -44,7 +44,9 @@ def user_create(req_body, user_id = []):
     # push user into db
     users.insert_one(id_dict)
 
-    return json.dumps({'message': 'new user has created'})
+    user_created = users.find_one(id_dict)
+
+    return json.dumps(user_created)
     
 
 
@@ -53,13 +55,12 @@ def user_detail(user_id, method, req_body):
     print()
     print(user_id, method, req_body)
 
-    query = {"_id": user_id}
+    query = {"_id": int(user_id)}
     print(query)
 
     if method == 'GET':
         user = users.find_one(query)
-        # user = users.find(query)
-        print(user)
+        # print(user)
 
         return json.dumps(user)    
 
@@ -70,6 +71,8 @@ def user_detail(user_id, method, req_body):
     if method == 'PUT':
         new_values = json.loads(req_body)
         print(new_values)
-        users.update_one(query, new_values)
-        return json.dumps({'message': 'user data is successfully updated'})      
+        users.update_one(query, {"$set":new_values})
+        return json.dumps({'message': 'user data is successfully updated'}) # return updated user
+
+    # if there is no user with such id -> 404 {"user": "Not found"}
     
