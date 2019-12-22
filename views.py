@@ -8,15 +8,11 @@ def user_list():
     # pull users from db
     req_users = users.find()
     # return users as json
-    context = {
-        'count': 0,
-        'results': []
-    }
+    context = []
     for user in req_users:
-        context['count'] = context.get('count') + 1
-        context['results'].append(user)
+        context.append(user)
 
-    # print(context)
+    print(context)
 
     return json.dumps(context) 
 
@@ -58,10 +54,13 @@ def user_detail(user_id, method, req_body):
     query = {"_id": int(user_id)}
     print(query)
 
-    if method == 'GET':
-        user = users.find_one(query)
-        # print(user)
+    user = users.find_one(query)
+    # print(user)
+    if not user:
+        return None
 
+    if method == 'GET':
+        
         return json.dumps(user)    
 
     if method == 'DELETE':
@@ -72,7 +71,7 @@ def user_detail(user_id, method, req_body):
         new_values = json.loads(req_body)
         print(new_values)
         users.update_one(query, {"$set":new_values})
-        return json.dumps({'message': 'user data is successfully updated'}) # return updated user
+        return json.dumps(users.find_one(query)) 
 
     # if there is no user with such id -> 404 {"user": "Not found"}
     

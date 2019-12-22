@@ -1,5 +1,6 @@
 import socket
 import re
+from init_db import users
 from views import user_list, user_create, user_detail
 
 
@@ -38,7 +39,7 @@ def check_405(method, url):
         if method != 'GET':
             return False
     elif  url == '/users/create':
-        if method != 'POST':
+        if method not in ['GET', 'POST']:
             return False
     else:
         if method not in ['GET', 'PUT', 'DELETE']:
@@ -86,6 +87,10 @@ def gen_response(request):
         res_body = gen_content(code, url, method, req_body)
     else:
         res_body = gen_content(code, url, method)
+
+    if res_body == None:
+        return 'HTTP/1.1 404 Page not found\n\n'.encode()
+
     # print(f'body: {res_body}')
     return (headers + res_body).encode() # headers.encode()
 
