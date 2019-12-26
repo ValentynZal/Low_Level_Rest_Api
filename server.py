@@ -1,5 +1,6 @@
 import socket
 import re
+import json
 from init_db import users
 from views import user_list, user_create, user_detail
 
@@ -26,10 +27,9 @@ def check_404(url):
     ''' check request url in routes'''
 
     if url not in URLS.keys() and re.match(r'/users/user/\d+', url) is None:
-        return False       
+        return True       
 
-    return True
-
+    return False
 
 
 def check_405(method, url):
@@ -37,23 +37,62 @@ def check_405(method, url):
            
     if url == '/users':
         if method != 'GET':
-            return False
+            return True
     elif  url == '/users/create':
         if method not in ['GET', 'POST']:
-            return False
+            return True
     else:
         if method not in ['GET', 'PUT', 'DELETE']:
-            return False        
+            return True        
 
-    return True
+    return False
 
+
+def check_422(req_body):
+    user_data = json.loads(req_body)
+
+    headers_422 = 'HTTP/1.1 422 Unprocessable Entity\n\n'
+    invalid_len = '<h1>422</h1><p>Invalid field length</p>'
+    invalid_date = '<h1>422</h1><p>Invalid date format</p>'
+    invalid_select = '<h1>422</h1><p>Invalid field length</p>'
+
+
+    def valid_len(field_name, length):
+        if len(user_data.get(field_name)) > length:
+            return False
+
+    def valid_select(field_name, sel=['male', 'female']):
+        if user_data.get(field_name) not in sel:
+            return False
+
+    def valid_date(field_name, pattern=r'\d{4}-\d{2}-\d{2}'):
+        if re.match(pattern, user_data.get(field_name)) == None:
+            return False
+
+    for k, v in user_data.items():
+        if k in ['name', 'surname', 'profession']:
+            check = valid_len(k, 256)
+            body = invalid_len
+        elif k == 'bio':
+            check = valid_len(k, 1024)
+            body = invalid_len
+        elif k == 'birthdate':
+            check = valid_date(k)
+            body = invalid_date
+        elif k == 'gender':
+            valid_select(k)
+            body = invalid_select
+
+        if check == False:
+            return headers_422 + body
+        
 
 def gen_headers(method, url):
     ''' returns headers '''
 
-    if check_404(url) == False:
+    if check_404(url):
         return('HTTP/1.1 404 Method not found\n\n', 404)
-    elif check_405(method, url) == False:
+    elif check_405(method, url):
         return('HTTP/1.1 405 Method not allowed\n\n', 405)
     else:    
         return ('HTTP/1.1 200 OK\n\n', 200)
@@ -76,7 +115,6 @@ def gen_content(code, url, method, req_body=None):
         return URLS[url](user_id, method, req_body)        
     
 
-
 def gen_response(request):
     method, url = parse_request(request)
     # print(f'method: {method} url: {url}')
@@ -84,13 +122,19 @@ def gen_response(request):
     # print(f'headers: {headers} code: {code}')
     if method == 'POST' or method == 'PUT':
         req_body = parse_request_body(request)
-        res_body = gen_content(code, url, method, req_body)
+        print(type(req_body))
+        print(req_body)
+        # TODO: if return not empty then new headers and save res body
+        res = check_422(req_body)
+        if res != None:
+            return res.encode()
     else:
-        res_body = gen_content(code, url, method)
+        req_body = None
 
+    res_body = gen_content(code, url, method, req_body)
+    
     if res_body == None:
         return 'HTTP/1.1 404 Page not found\n\n'.encode()
-
     # print(f'body: {res_body}')
     return (headers + res_body).encode() # headers.encode()
 
@@ -108,18 +152,15 @@ def run():
 
         request = client_socket.recv(1024)
         # print(request.decode('utf-8').split('r\n\r\n'))
-        # print()
         # print(request.decode('utf-8'))
-        # print()
         print(request)
         
-        # print(addr)
-
         response = gen_response(request.decode('utf-8'))
         print(response)
 
         client_socket.sendall(response)
         client_socket.close()
+
 
 if __name__ == '__main__':
     run()
