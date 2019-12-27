@@ -13,13 +13,14 @@ URLS = {
 
 
 def parse_request(request):
-    ''' returns method and url '''
+    ''' returns request method and url '''
 
     parsed = request.split(' ')
     return (parsed[0], parsed[1])
 
 
 def parse_request_body(request):
+    ''' returns request body '''
     return request.split('\r\n\r\n')[1]
 
 
@@ -49,23 +50,28 @@ def check_405(method, url):
 
 
 def check_422(req_body):
+    ''' checks for to be valid data posted '''
+
     user_data = json.loads(req_body)
 
     headers_422 = 'HTTP/1.1 422 Unprocessable Entity\n\n'
-    invalid_len = json.dumps({'message': 'Invalid field length'})  #'<h1>422</h1><p>Invalid field length</p>'
-    invalid_date = json.dumps({'message': 'Invalid date format'}) #'<h1>422</h1><p>Invalid date format</p>'
-    invalid_select = json.dumps({'message': 'Unexisting select'}) #'<h1>422</h1><p>Unexisting select</p>'
+    invalid_len = json.dumps({'message': 'Invalid field length'})  
+    invalid_date = json.dumps({'message': 'Invalid date format'}) 
+    invalid_select = json.dumps({'message': 'Unexisting select'}) 
 
 
     def valid_len(field_name, length):
+        ''' length validation '''
         if len(user_data.get(field_name)) > length:
             return False
 
     def valid_select(field_name, sel=['male', 'female']):
+        ''' select validation '''
         if user_data.get(field_name) not in sel:
             return False
 
     def valid_date(field_name, pattern=r'\d{4}-\d{2}-\d{2}'):
+        ''' date validation '''
         if re.match(pattern, user_data.get(field_name)) == None:
             return False
 
@@ -79,7 +85,6 @@ def check_422(req_body):
         elif k == 'birthdate':
             check = valid_date(k)
             body = invalid_date
-        # TODO: not working - check!
         elif k == 'gender':
             check = valid_select(k)
             body = invalid_select
@@ -100,11 +105,13 @@ def gen_headers(method, url):
      
 
 def gen_content(code, url, method, req_body=None):
+    ''' returns response body '''
+
     if code == 404:
-        return  json.dumps({'message': 'Page not found'}) #'<h1>404</h1><p>Not found</p>'
+        return  json.dumps({'message': 'Page not found'}) 
 
     if code == 405:
-        return json.dumps({'message': 'Method not allowed'}) # '<h1>405</h1><p>Method not allowed</p>'
+        return json.dumps({'message': 'Method not allowed'}) 
 
     if url == '/users':
         return URLS[url]()        
@@ -117,10 +124,11 @@ def gen_content(code, url, method, req_body=None):
     
 
 def gen_response(request):
+    ''' returns response '''
+
     method, url = parse_request(request)
-    # print(f'method: {method} url: {url}')
     headers, code = gen_headers(method, url)
-    # print(f'headers: {headers} code: {code}')
+
     if method == 'POST' or method == 'PUT':
         req_body = parse_request_body(request)
         print(req_body)
@@ -134,12 +142,13 @@ def gen_response(request):
     
     if res_body == None:
         return ('HTTP/1.1 404 Page is not found\n\n' + json.dumps({'message': 'Page is not found'})).encode()
-    # print(f'body: {res_body}')
-    return (headers + res_body).encode() # headers.encode()
+
+    return (headers + res_body).encode() 
 
 
 def run():
     ''' create and setup both server and client sockets, handle requests '''
+
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server_socket.bind(('localhost', 5000))
@@ -147,15 +156,12 @@ def run():
 
     while True:
         client_socket, addr = server_socket.accept()
-        # print('Connection from', addr)
 
         request = client_socket.recv(1024)
-        # print(request.decode('utf-8').split('r\n\r\n'))
-        # print(request.decode('utf-8'))
-        print(request)
+        # print(request)
         
         response = gen_response(request.decode('utf-8'))
-        print(response)
+        # print(response)
 
         client_socket.sendall(response)
         client_socket.close()
