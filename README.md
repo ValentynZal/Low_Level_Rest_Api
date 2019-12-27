@@ -38,23 +38,33 @@ API:
 Тестирование приложениея произведено с помощью firefox плагина "RESTED"
 
 1 Тест POST запроса
-
 2 Тест GET запроса юзеров
-
 3 Тест GET запроса юзера
-
 4 Тест UPDATE запроса юзера
-
 5 Тест DELETE запроса  юзера
-
 6 Тест случая 404 ответа
-
 7 Тест случая 405 ответа
-
 8 Тест валидации:
-
     - максимальная допустимая длина
-
     - формат даты
-
     - селект
+    
+![](images/test_1.png)
+
+![](images/test_2.png)
+
+![](images/test_3.png)
+
+![](images/test_4.png)
+
+![](images/test_5.png)
+
+![](images/test_6.png)
+
+![](images/test_7.png)
+
+![](images/test_8_1.png)
+
+![](images/test_8_2.png)
+
+![](images/test_8_3.png)
