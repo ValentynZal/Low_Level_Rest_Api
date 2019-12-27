@@ -52,9 +52,9 @@ def check_422(req_body):
     user_data = json.loads(req_body)
 
     headers_422 = 'HTTP/1.1 422 Unprocessable Entity\n\n'
-    invalid_len = '<h1>422</h1><p>Invalid field length</p>'
-    invalid_date = '<h1>422</h1><p>Invalid date format</p>'
-    invalid_select = '<h1>422</h1><p>Invalid field length</p>'
+    invalid_len = json.dumps({'message': 'Invalid field length'})  #'<h1>422</h1><p>Invalid field length</p>'
+    invalid_date = json.dumps({'message': 'Invalid date format'}) #'<h1>422</h1><p>Invalid date format</p>'
+    invalid_select = json.dumps({'message': 'Unexisting select'}) #'<h1>422</h1><p>Unexisting select</p>'
 
 
     def valid_len(field_name, length):
@@ -71,7 +71,7 @@ def check_422(req_body):
 
     for k, v in user_data.items():
         if k in ['name', 'surname', 'profession']:
-            check = valid_len(k, 256)
+            check = valid_len(k, 15)
             body = invalid_len
         elif k == 'bio':
             check = valid_len(k, 1024)
@@ -79,8 +79,9 @@ def check_422(req_body):
         elif k == 'birthdate':
             check = valid_date(k)
             body = invalid_date
+        # TODO: not working - check!
         elif k == 'gender':
-            valid_select(k)
+            check = valid_select(k)
             body = invalid_select
 
         if check == False:
@@ -100,10 +101,10 @@ def gen_headers(method, url):
 
 def gen_content(code, url, method, req_body=None):
     if code == 404:
-        return '<h1>404</h1><p>Not found</p>'
+        return  json.dumps({'message': 'Page not found'}) #'<h1>404</h1><p>Not found</p>'
 
     if code == 405:
-        return '<h1>405</h1><p>Method not allowed</p>'
+        return json.dumps({'message': 'Method not allowed'}) # '<h1>405</h1><p>Method not allowed</p>'
 
     if url == '/users':
         return URLS[url]()        
@@ -122,9 +123,7 @@ def gen_response(request):
     # print(f'headers: {headers} code: {code}')
     if method == 'POST' or method == 'PUT':
         req_body = parse_request_body(request)
-        print(type(req_body))
         print(req_body)
-        # TODO: if return not empty then new headers and save res body
         res = check_422(req_body)
         if res != None:
             return res.encode()
@@ -134,7 +133,7 @@ def gen_response(request):
     res_body = gen_content(code, url, method, req_body)
     
     if res_body == None:
-        return 'HTTP/1.1 404 Page not found\n\n'.encode()
+        return ('HTTP/1.1 404 Page is not found\n\n' + json.dumps({'message': 'Page is not found'})).encode()
     # print(f'body: {res_body}')
     return (headers + res_body).encode() # headers.encode()
 

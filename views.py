@@ -1,7 +1,10 @@
 import json
 import re
 from bson.json_util import dumps
-from init_db import users
+from init_db import users, db
+
+
+user_id_list = [1]
 
 
 def user_list(): 
@@ -17,19 +20,15 @@ def user_list():
 
     return json.dumps(context) 
 
-
-def user_create(req_body, user_id = []): 
+def user_create(req_body): 
     ''' create user '''
-    # modify id
-    if not user_id:
-        id_dict = {"_id": 1}
-        print(id_dict)
-        user_id.append(2)
-    else:
-        idx = len(user_id)-1  
-        id_dict = {"_id": user_id[idx]}
-        print(id_dict)
-        user_id.append(user_id[idx]+1)
+    # autoincrement id
+    global user_id_list
+    # id_dict = {}
+
+    idx = len(user_id_list)-1  
+    id_dict = {"_id": user_id_list[idx]}
+    user_id_list.append(user_id_list[idx]+1)
 
     # parse request body
     new_user = json.loads(req_body)
@@ -39,7 +38,7 @@ def user_create(req_body, user_id = []):
     id_dict.update(new_user)
 
     # push user into db
-    users.insert_one(id_dict)
+    users.insert_one(id_dict) # inserted_id
 
     user_created = users.find_one(id_dict)
 
@@ -49,6 +48,8 @@ def user_create(req_body, user_id = []):
 
 def user_detail(user_id, method, req_body):
     ''' retrieve, delete, update user '''
+    global user_id_list
+
     print()
     print(user_id, method, req_body)
 
@@ -65,8 +66,10 @@ def user_detail(user_id, method, req_body):
         return json.dumps(user)    
 
     if method == 'DELETE':
+        global user_id_list
         users.delete_one(query) 
-        return json.dumps({'message': 'user is successfully deleted'})  
+        user_id_list.remove(int(user_id)) # remove id
+        return json.dumps({'message': f'user with id:{user_id} is successfully deleted'})  
 
     if method == 'PUT':
         new_values = json.loads(req_body)
